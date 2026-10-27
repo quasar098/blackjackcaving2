@@ -881,10 +881,12 @@
                 answerDiv.style.display =
                     "none";
 
+                let showAllImmediately = true;
+                let show;
 
                 button.addEventListener(
                     "click",
-                    () => {
+                    (show = () => {
 
                         // Group answers by their total point value.
                         const groups = new Map();
@@ -933,8 +935,12 @@
 
                         button.style.display =
                             "none";
-                    }
+                    })
                 );
+
+                if (showAllImmediately) {
+                    show();
+                }
 
 
                 answersContainer.appendChild(button);
