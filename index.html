@@ -295,7 +295,7 @@
             text-align: center;
             padding: 0;
 
-            z-index: 10;
+            z-index: 100;
         }
 
         #game-over h2 {
@@ -350,9 +350,104 @@
            SMALL SCREENS
            ========================= */
 
+        @media (hover: none) or (pointer: coarse)  {
+
+            /* Manual keyboard: no input element means no native keyboard. */
+            #mobile-keyboard {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 40;
+
+                display: grid;
+                grid-template-columns: repeat(10, minmax(0, 1fr));
+                gap: 4px;
+
+                padding: 6px;
+                background: #f4f4f4;
+                border-top: 1px solid #bbb;
+                box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+
+                touch-action: manipulation;
+            }
+
+            .mobile-key {
+                min-width: 0;
+                height: 42px;
+                padding: 0;
+
+                font-family: monospace;
+                font-size: 16px;
+                font-weight: bold;
+
+                background: white;
+                color: #111;
+                border: 1px solid #aaa;
+                border-radius: 4px;
+
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+            }
+
+            .mobile-key:active {
+                background: #ddd;
+            }
+
+            .mobile-key.backspace {
+                grid-column: span 1;
+            }
+
+            .mobile-key.enter {
+                grid-column: span 3;
+            }
+
+            #game {
+                padding-bottom: 150px;
+            }
+        }
+
         @media (max-width: 800px) {
+            #puzzles {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: none;
+                grid-auto-rows: minmax(180px, auto);
+            }
+
             body {
-                overflow: auto;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
+            /* Sticky only on mobile. Desktop keeps the original layout. */
+            #current-word-container {
+                height: 53px;
+                position: sticky;
+                top: 0;
+                z-index: 30;
+                background: black;
+                padding-top: 4px;
+                padding-bottom: 4px;
+                border: 1px solid white;
+                border-radius: 4px;
+            }
+
+            #puzzles {
+                padding-top: 8px;
+            }
+
+            #current-word-container.game-ended {
+                z-index: -1;
+                position: static;
+            }
+
+            #header.game-ended {
+                visibility: hidden;
+            }
+
+            html, body {
+                height: 100%;
             }
 
             #game {
@@ -360,13 +455,21 @@
                 min-height: 100vh;
             }
 
-            #puzzles {
-                grid-template-columns: repeat(2, 1fr);
-                grid-template-rows: repeat(5, minmax(180px, 1fr));
+            .puzzle {
+                max-height: 500px;
             }
+        }
 
-            #stats {
-                gap: 15px;
+        /* Completely absent from the desktop layout. */
+        @media (hover: hover) and (pointer: fine)  {
+            #mobile-keyboard {
+                display: none;
+            }
+        }
+
+        @media (hover: hover) and (pointer: fine) and (min-width: 801px) {
+            #small-screen-warn {
+                display: none;
             }
         }
     </style>
@@ -397,6 +500,39 @@
         <h2>Time's Up!</h2>
         <div id="final-score"></div>
         <button id="restart">Play Again</button>
+    </div>
+
+    <div id="mobile-keyboard" aria-label="Keyboard">
+        <button type="button" class="mobile-key" data-key="Q">Q</button>
+        <button type="button" class="mobile-key" data-key="W">W</button>
+        <button type="button" class="mobile-key" data-key="E">E</button>
+        <button type="button" class="mobile-key" data-key="R">R</button>
+        <button type="button" class="mobile-key" data-key="T">T</button>
+        <button type="button" class="mobile-key" data-key="Y">Y</button>
+        <button type="button" class="mobile-key" data-key="U">U</button>
+        <button type="button" class="mobile-key" data-key="I">I</button>
+        <button type="button" class="mobile-key" data-key="O">O</button>
+        <button type="button" class="mobile-key" data-key="P">P</button>
+
+        <button type="button" class="mobile-key" data-key="A">A</button>
+        <button type="button" class="mobile-key" data-key="S">S</button>
+        <button type="button" class="mobile-key" data-key="D">D</button>
+        <button type="button" class="mobile-key" data-key="F">F</button>
+        <button type="button" class="mobile-key" data-key="G">G</button>
+        <button type="button" class="mobile-key" data-key="H">H</button>
+        <button type="button" class="mobile-key" data-key="J">J</button>
+        <button type="button" class="mobile-key" data-key="K">K</button>
+        <button type="button" class="mobile-key" data-key="L">L</button>
+        <button type="button" class="mobile-key backspace" data-key="BACKSPACE">⌫</button>
+
+        <button type="button" class="mobile-key" data-key="Z">Z</button>
+        <button type="button" class="mobile-key" data-key="X">X</button>
+        <button type="button" class="mobile-key" data-key="C">C</button>
+        <button type="button" class="mobile-key" data-key="V">V</button>
+        <button type="button" class="mobile-key" data-key="B">B</button>
+        <button type="button" class="mobile-key" data-key="N">N</button>
+        <button type="button" class="mobile-key" data-key="M">M</button>
+        <button type="button" class="mobile-key enter" data-key="ENTER">ENTER</button>
     </div>
 
 </div>
