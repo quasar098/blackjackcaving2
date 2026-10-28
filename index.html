@@ -1362,6 +1362,38 @@
        which part of the page is focused.
     */
 
+    function handleMobileKey(key) {
+
+        if (!gameActive) {
+            return;
+        }
+
+        if (key === "ENTER") {
+            submitWord();
+            return;
+        }
+
+        if (key === "BACKSPACE") {
+            currentWord = currentWord.slice(0, -1);
+            updateCurrentWord();
+            return;
+        }
+
+        if (/^[A-Z]$/.test(key)) {
+            currentWord += key;
+            updateCurrentWord();
+        }
+    }
+
+    document.querySelectorAll(".mobile-key").forEach(button => {
+
+        button.addEventListener("touchstart", event => {
+            event.preventDefault();
+            handleMobileKey(button.dataset.key);
+        }, { passive: false });
+
+    });
+
     document.addEventListener("keydown", event => {
 
         if (!gameActive) {
