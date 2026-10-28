@@ -458,11 +458,32 @@
             .puzzle {
                 max-height: 500px;
             }
+
+            #hidden-keyboard-gateway {
+                position: absolute;
+                opacity: 0;
+                font-size: 16px;
+                z-index: 200000;
+                left: 0;
+                top: 0;
+                width: 100vw;
+                height: 100vh;
+                background: red;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            html, body {
+                overflow-x: hidden;
+            }
         }
 
         /* Completely absent from the desktop layout. */
         @media (hover: hover) and (pointer: fine)  {
             #mobile-keyboard {
+                display: none;
+            }
+
+            #hidden-keyboard-gateway {
                 display: none;
             }
         }
@@ -478,6 +499,11 @@
 <body>
 
 <div id="game">
+
+<!--    <input-->
+<!--            type="text"-->
+<!--            id="hidden-keyboard-gateway"-->
+<!--    />-->
 
     <div id="header">
         <h1>Blackjack Caving 2</h1>
@@ -541,6 +567,7 @@
 <script>
     "use strict";
 
+    // document.getElementById('hidden-keyboard-gateway').focus()
 
     /* ============================================================
        WORD LIST
