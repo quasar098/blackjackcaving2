@@ -1574,6 +1574,57 @@
        START GAME
        ============================================================ */
 
+    function getFile(filename) {
+        return new Promise((resolve, reject) => {
+            (async () => {
+                const request = window.indexedDB.open("BlackjackCaving", 1);
+
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (db.objectStoreNames.contains("files")) {
+                        db.deleteObjectStore("files");
+                    }
+                    db.createObjectStore("files");
+                };
+
+                request.onerror = (event) => {
+                    console.log("error", event.target.error);
+                };
+
+                request.onsuccess = async (event) => {
+                    const db = event.target.result;
+
+                    let gottenKey = await new Promise((resolve2, reject2) => {
+                        const store = db.transaction(["files"], "readwrite").objectStore("files");
+                        let getKeyReq = store.getKey(filename);
+                        getKeyReq.onerror = (e) => { console.log("error", e.target.error); reject2(e) };
+                        getKeyReq.onsuccess = (e) => { resolve2(getKeyReq.result) };
+                    })
+                    if (gottenKey === undefined) {
+                        let resp = await fetch(filename);
+                        if (!resp.ok) {
+                            throw new Error("Could not load " + filename);
+                        }
+                        let text = await resp.text();
+
+                        await new Promise((resolve2, reject2) => {
+                            const store = db.transaction(["files"], "readwrite").objectStore("files");
+                            let putReq = store.put(text, filename);
+                            putReq.onerror = (e) => { console.log("error", e); reject2(e.target.error) };
+                            putReq.onsuccess = (e) => { console.log("success"); resolve2() };
+                        });
+                    }
+                    const store = db.transaction(["files"], "readwrite").objectStore("files");
+                    let getReq = store.get(filename);
+                    getReq.onerror = (event) => { console.log("error", event.target.error); reject(event.target.error) };
+                    getReq.onsuccess = (event) => { resolve(getReq.result) }
+
+                    db.close();
+                };
+            })();
+        });
+    }
+
     async function startGame() {
 
         /*
@@ -1582,18 +1633,9 @@
 
         if (wordList.length === 0) {
 
-            const commonResponse = await fetch("CEL22.txt");
-            if (!commonResponse.ok) {
-                throw new Error("Could not load CEL22.txt");
-            }
+            const commonText = await getFile("CEL22.txt");
 
-            const rareResponse = await fetch("words_alpha.txt");
-            if (!rareResponse.ok) {
-                throw new Error("Could not load words_alpha.txt");
-            }
-
-            const commonText = await commonResponse.text();
-            const rareText = await rareResponse.text();
+            const rareText = await getFile("words_alpha.txt");
 
             wordList = [...new Set(
                 commonText.split(/\r?\n/)
