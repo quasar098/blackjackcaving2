@@ -475,6 +475,10 @@
             html, body {
                 overflow-x: hidden;
             }
+
+            #url {
+                display: none;
+            }
         }
 
         /* Completely absent from the desktop layout. */
@@ -493,6 +497,16 @@
                 display: none;
             }
         }
+
+        .topleft {
+            position: relative;
+            width: 30vw;
+        }
+
+        #url {
+            position: absolute;
+            margin-top: 0.5em;
+        }
     </style>
 </head>
 
@@ -506,7 +520,10 @@
 <!--    />-->
 
     <div id="header">
-        <h1>Blackjack Caving 2</h1>
+        <div class="topleft">
+            <h1>Blackjack Caving 2</h1>
+            <h3 id="url"></h3>
+        </div>
 
         <div id="stats">
             <button id="give-up">Give Up</button>
@@ -559,6 +576,10 @@
         <button type="button" class="mobile-key" data-key="N">N</button>
         <button type="button" class="mobile-key" data-key="M">M</button>
         <button type="button" class="mobile-key enter" data-key="ENTER">ENTER</button>
+    </div>
+
+    <div id="settings">
+
     </div>
 
 </div>
@@ -629,26 +650,27 @@
        RANDOM PUZZLE
        ============================================================ */
 
-    function randomRack() {
+    function randomRack(puzzles3, puzzles4) {
 
         /*
             3 or 4 letters.
         */
 
-        const length = Math.min(
-            4,
-            Math.floor(Math.random() * 3) + 3
-        );
+        const length = Math.random() > 0.416789 ? 4 : 3;  // found by stochastic-matrix simulation
 
-        let result = "";
+        // let result = "";
+        //
+        // for (let i = 0; i < length; i++) {
+        //     result += String.fromCharCode(
+        //         65 + Math.floor(Math.random() * 26)
+        //     );
+        // }
+        //
+        // return result;
 
-        for (let i = 0; i < length; i++) {
-            result += String.fromCharCode(
-                65 + Math.floor(Math.random() * 26)
-            );
-        }
+        const puzzleList = length === 4 ? puzzles4 : puzzles3;
 
-        return result;
+        return puzzleList[Math.floor(Math.random() * puzzleList.length)];
     }
 
 
@@ -656,15 +678,18 @@
        GENERATE 10 PUZZLES
        ============================================================ */
 
-    function generatePuzzles() {
+    async function generatePuzzles() {
 
         const puzzles = [];
+
+        const validPuzzles3 = (await getFile("valid_puzzles_3.txt")).toUpperCase().split(/\r?\n/).slice(0, -1);
+        const validPuzzles4 = (await getFile("valid_puzzles_4.txt")).toUpperCase().split(/\r?\n/).slice(0, -1);
 
         for (let i = 0; i < 10; i++) {
 
             while (true) {
 
-                const rack = randomRack();
+                const rack = randomRack(validPuzzles3, validPuzzles4);
                 const ans = answers(rack);
 
                 /*
@@ -1567,6 +1592,8 @@
         document.getElementById("final-score")
             .textContent =
             `Final score: ${score}`;
+
+        document.getElementById("url").textContent = location.href;
     }
 
 
@@ -1656,7 +1683,7 @@
         */
 
         puzzles =
-            generatePuzzles();
+            await generatePuzzles();
 
         score =
             0;
@@ -1676,6 +1703,7 @@
             .style.display =
             "none";
 
+        document.getElementById("url").textContent = "";
 
         updateScore();
 
