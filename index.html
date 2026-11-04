@@ -507,6 +507,70 @@
             position: absolute;
             margin-top: 0.5em;
         }
+
+        /* settings */
+
+        #open-settings,#close-settings {
+            font-family: monospace;
+            font-size: 11px;
+
+            background: black;
+            color: #eee;
+
+            border: 1px solid #aaa;
+            border-radius: 4px;
+
+            padding: 4px 7px;
+            cursor: pointer;
+        }
+
+        #settings {
+            position: absolute;
+            left: 4px;
+            top: 0;
+            bottom: 0;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        div#settings-closed {
+            opacity: 0.3;
+        }
+
+        div#settings-closed:hover {
+            opacity: 1;
+        }
+
+        .settings-bg {
+            padding: 3px;
+            background: #030303;
+        }
+
+        input {
+            min-height: 0;
+            background: black;
+            border: 1px solid #bbb;
+            border-radius: 0px;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            overflow: hidden;
+
+            color: white;
+        }
+
+        input:focus {
+            outline: none;
+        }
+
+        div#settings-opened p {
+            margin: 0;
+        }
     </style>
 </head>
 
@@ -577,16 +641,45 @@
         <button type="button" class="mobile-key" data-key="M">M</button>
         <button type="button" class="mobile-key enter" data-key="ENTER">ENTER</button>
     </div>
-
-    <div id="settings">
-
-    </div>
-
 </div>
 
+<div id="settings">
+    <div id="settings-closed">
+        <button id="open-settings">></button>
+    </div>
+    <div id="settings-opened">
+        <div class="settings-bg">
+            <p>Puzzle Filter Regex</p>
+            <input id="puzzle-filter-regex" type="text" placeholder=".*">
+        </div>
+        <button id="close-settings"><</button>
+    </div>
+</div>
 
 <script>
     "use strict";
+
+    /* settings */
+
+    let settingsClosedElm = document.getElementById("settings-closed");
+    let settingsOpenedElm = document.getElementById("settings-opened");
+    settingsOpenedElm.style.display = "none";
+    document.getElementById("open-settings").addEventListener("click", () => {
+        settingsClosedElm.style.display = "none";
+        settingsOpenedElm.style.display = "block";
+    })
+    document.getElementById("close-settings").addEventListener("click", () => {
+        settingsClosedElm.style.display = "block";
+        settingsOpenedElm.style.display = "none";
+    })
+    let puzzleFilter = localStorage.getItem("blackjack-caving-puzzle-filter") || "";
+    let puzzleFilterElm = document.getElementById("puzzle-filter-regex");
+    puzzleFilterElm.value = puzzleFilter;
+    puzzleFilterElm.addEventListener("input", () => {
+        puzzleFilter = puzzleFilterElm.value;
+        localStorage.setItem("blackjack-caving-puzzle-filter", puzzleFilter);
+    })
+    console.log(puzzleFilter);
 
     // document.getElementById('hidden-keyboard-gateway').focus()
 
@@ -650,13 +743,20 @@
        RANDOM PUZZLE
        ============================================================ */
 
-    function randomRack(puzzles3, puzzles4) {
+    function randomRack(puzzles3, puzzles4, i) {
 
         /*
             3 or 4 letters.
         */
 
-        const length = Math.random() > 0.416789 ? 4 : 3;  // found by stochastic-matrix simulation
+        let length;
+        if (puzzles3.length && puzzles4.length) {
+            length = Math.random() > 0.416789 ? 4 : 3;  // found by stochastic matrix simulation
+        } else if (puzzles3.length) {
+            length = 3;
+        } else if (puzzles4.length) {
+            length = 4;
+        }
 
         // let result = "";
         //
@@ -682,22 +782,34 @@
 
         const puzzles = [];
 
-        const validPuzzles3 = (await getFile("valid_puzzles_3.txt")).toUpperCase().split(/\r?\n/).slice(0, -1);
-        const validPuzzles4 = (await getFile("valid_puzzles_4.txt")).toUpperCase().split(/\r?\n/).slice(0, -1);
+        const regex = RegExp(puzzleFilter.toUpperCase() || ".*");
+        const validPuzzles3 = (await getFile("valid_puzzles_3.txt"))
+            .toUpperCase()
+            .split(/\r?\n/)
+            .slice(0, -1)
+            .filter(s => regex.test(s));
+        const validPuzzles4 = (await getFile("valid_puzzles_4.txt"))
+            .toUpperCase()
+            .split(/\r?\n/)
+            .slice(0, -1)
+            .filter(s => regex.test(s));
 
         for (let i = 0; i < 10; i++) {
 
             while (true) {
 
-                const rack = randomRack(validPuzzles3, validPuzzles4);
-                const ans = answers(rack);
-
-                /*
-                    Need at least 15 possible answers, all of which are 6+ letters.
-                */
-
-                if (ans.length < 15 || ans.some(word => word.length < 6) ) {
-                    continue;
+                let rack;
+                let ans;
+                if (validPuzzles3.length || validPuzzles4.length) {
+                    rack = randomRack(validPuzzles3, validPuzzles4, i);
+                    ans = answers(rack);
+                    /* Need at least 15 possible answers, all of which are 6+ letters. */
+                    if (ans.length < 15 || ans.some(word => word.length < 6) ) {
+                        continue;
+                    }
+                } else {
+                    rack = ["nov","ali","dre","sul","tsf","ort","his","reg","exl","mao"][i].toUpperCase();
+                    ans = answers(rack);
                 }
 
                 puzzles.push({
@@ -723,13 +835,12 @@
             }
         }
 
-        /*
-            Harder puzzles (fewer answers) first.
-        */
-
-        puzzles.sort((a, b) =>
-            b.answers.length - a.answers.length
-        );
+        if (validPuzzles3.length || validPuzzles4.length) {
+            // harder puzzles first
+            puzzles.sort((a, b) =>
+                b.answers.length - a.answers.length
+            );
+        }
 
         return puzzles;
     }
@@ -1449,6 +1560,10 @@
     document.addEventListener("keydown", event => {
 
         if (!gameActive) {
+            return;
+        }
+
+        if (document.activeElement.tagName.toLowerCase() === "input") {
             return;
         }
 
