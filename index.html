@@ -549,7 +549,7 @@
             background: #030303;
         }
 
-        input {
+        input[type="text"] {
             min-height: 0;
             background: black;
             border: 1px solid #bbb;
@@ -570,6 +570,10 @@
 
         div#settings-opened p {
             margin: 0;
+        }
+
+        p[num]::after {
+            content: " (" attr(num) ")";
         }
     </style>
 </head>
@@ -651,6 +655,8 @@
         <div class="settings-bg">
             <p>Puzzle Filter Regex</p>
             <input id="puzzle-filter-regex" type="text" placeholder=".*">
+            <p num="22" id="bullseye-length-max-label">Bullseye Max Length</p>
+            <input id="bullseye-length-max" type="range" min="6" max="22">
         </div>
         <button id="close-settings"><</button>
     </div>
@@ -679,7 +685,16 @@
         puzzleFilter = puzzleFilterElm.value;
         localStorage.setItem("blackjack-caving-puzzle-filter", puzzleFilter);
     })
-    console.log(puzzleFilter);
+    let bullseyeLengthMax = localStorage.getItem("blackjack-caving-bullseye-length-max") || "22";
+    let bullseyeLengthMaxElm = document.getElementById("bullseye-length-max");
+    let bullseyeLengthMaxLabelElm = document.getElementById("bullseye-length-max-label");
+    bullseyeLengthMaxElm.value = bullseyeLengthMax;
+    bullseyeLengthMaxLabelElm.setAttribute("num", bullseyeLengthMax);
+    bullseyeLengthMaxElm.addEventListener("input", () => {
+        bullseyeLengthMax = bullseyeLengthMaxElm.value;
+        localStorage.setItem("blackjack-caving-bullseye-length-max", bullseyeLengthMax);
+        bullseyeLengthMaxLabelElm.setAttribute("num", bullseyeLengthMax);
+    })
 
     // document.getElementById('hidden-keyboard-gateway').focus()
 
@@ -743,7 +758,7 @@
        RANDOM PUZZLE
        ============================================================ */
 
-    function randomRack(puzzles3, puzzles4, i) {
+    function randomRack(puzzles3, puzzles4) {
 
         /*
             3 or 4 letters.
@@ -787,11 +802,15 @@
             .toUpperCase()
             .split(/\r?\n/)
             .slice(0, -1)
+            .filter(s => s.slice(s.indexOf(",")+1)*1 <= bullseyeLengthMax)
+            .map(s => s.slice(0, s.indexOf(",")))
             .filter(s => regex.test(s));
         const validPuzzles4 = (await getFile("valid_puzzles_4.txt"))
             .toUpperCase()
             .split(/\r?\n/)
             .slice(0, -1)
+            .filter(s => s.slice(s.indexOf(",")+1)*1 <= bullseyeLengthMax)
+            .map(s => s.slice(0, s.indexOf(",")))
             .filter(s => regex.test(s));
 
         for (let i = 0; i < 10; i++) {
@@ -1719,7 +1738,7 @@
     function getFile(filename) {
         return new Promise((resolve, reject) => {
             (async () => {
-                const request = window.indexedDB.open("BlackjackCaving", 1);
+                const request = window.indexedDB.open("BlackjackCaving", 3);
 
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
