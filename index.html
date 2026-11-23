@@ -122,6 +122,16 @@
             align-items: center;
 
             overflow: hidden;
+
+            position: relative;
+        }
+
+        .bullseye {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            user-select: none;
+            font-size: 18px;
         }
 
         .puzzle.solved {
@@ -278,6 +288,11 @@
             border-top: 1px solid #ddd;
 
             word-break: break-word;
+        }
+
+        .answer-highlight {
+            font-weight: bold;
+            outline: 1px solid red;
         }
 
         /* =========================
@@ -913,6 +928,14 @@
        PUZZLE RENDERING
        ============================================================ */
 
+    function isOptimal(puzzle) {
+        if (!puzzle.solved) {
+            return false;
+        }
+        let earnedScore = calculatePoints(puzzle, puzzle.solution).total;
+        return puzzle.answers.every(answer => calculatePoints(puzzle, answer).total <= earnedScore);
+    }
+
     function renderPuzzles() {
 
         const container =
@@ -1242,8 +1265,10 @@
                             const line =
                                 document.createElement("div");
 
-                            line.textContent =
-                                `(${points}+)  ${words.join(", ")}`;
+                            let htmlWords = words.map(w => w === puzzle.solution ? `<span class="answer-highlight">${w}</span>` : w)
+
+                            line.innerHTML =
+                                `(${points}+)  ${htmlWords.join(", ")}`;
 
                             answerDiv.appendChild(line);
                         }
@@ -1265,6 +1290,14 @@
                 answersContainer.appendChild(answerDiv);
 
                 div.appendChild(answersContainer);
+
+                // bullseye icon
+                if (isOptimal(puzzle)) {
+                    let bullseyeDiv = document.createElement("div");
+                    bullseyeDiv.className = "bullseye";
+                    bullseyeDiv.textContent = "🎯";
+                    div.appendChild(bullseyeDiv);
+                }
             }
 
 
